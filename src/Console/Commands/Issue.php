@@ -4,6 +4,7 @@ namespace Goldnead\Certificates\Console\Commands;
 
 use Goldnead\Certificates\Certificates;
 use Goldnead\Certificates\Support\CourseBrand;
+use Goldnead\Certificates\Support\Subject;
 use Goldnead\Courses\Models\Enrollment;
 use Illuminate\Console\Command;
 use RuntimeException;
@@ -69,7 +70,7 @@ class Issue extends Command
         }
 
         $enrollment = Enrollment::query()
-            ->where('user_id', (string) $subject->id())
+            ->where('user_id', Subject::of($subject)->id)
             ->where('course_entry_id', $course)
             ->whereNotNull('completed_at')
             ->first();
