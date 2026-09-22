@@ -3,6 +3,7 @@
 namespace Goldnead\Certificates\Support;
 
 use Goldnead\BrandContext\BrandManager;
+use Goldnead\BrandContext\Models\Brand;
 use Statamic\Entries\Entry as StatamicEntry;
 use Statamic\Facades\Entry;
 
@@ -37,6 +38,17 @@ final class CourseBrand
         $handle = ((array) config('brand-context.sites', []))[$course->locale()] ?? null;
 
         return is_string($handle) && $handle !== '' ? $handle : null;
+    }
+
+    /**
+     * The handle of the one brand, when multi-brand is on but only one
+     * exists: nothing to guess between.
+     */
+    public static function onlyOne(): ?string
+    {
+        $handles = Brand::query()->limit(2)->pluck('handle');
+
+        return $handles->count() === 1 ? (string) $handles->first() : null;
     }
 
     /**

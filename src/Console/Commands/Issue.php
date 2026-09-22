@@ -155,7 +155,7 @@ class Issue extends Command
         }
 
         $brand = $this->option('brand');
-        $brand = is_string($brand) && $brand !== '' ? $brand : CourseBrand::of($courseId);
+        $brand = is_string($brand) && $brand !== '' ? $brand : (CourseBrand::of($courseId) ?? CourseBrand::onlyOne());
 
         if ($brand === null) {
             throw new RuntimeException("The course [{$courseId}] is in a site no brand is mapped to (brand-context.sites). Pass --brand=<handle>.");

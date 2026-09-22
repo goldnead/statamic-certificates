@@ -159,6 +159,27 @@ it('refuses to guess a brand from the console', function () {
     expect(Certificate::query()->acrossBrands()->count())->toBe(0);
 });
 
+it('uses the default brand from the console when multi-brand is off, with no site mapping', function () {
+    config(['brand-context.multi_brand' => false, 'brand-context.sites' => []]);
+    $this->makeUser('ada@example.com', 'Ada');
+
+    $this->artisan('certificates:issue', ['user' => 'ada@example.com', 'course' => $this->makeCourse('Kurs'), '--force' => true])
+        ->assertSuccessful();
+
+    expect(Certificate::query()->acrossBrands()->sole()->brand_id)->toBe(app('brand-context')->defaultId());
+});
+
+it('uses the only brand there is when multi-brand is on but one brand exists', function () {
+    Brand::query()->whereKeyNot(app('brand-context')->defaultId())->delete();
+    config(['brand-context.sites' => []]);
+    $this->makeUser('ada@example.com', 'Ada');
+
+    $this->artisan('certificates:issue', ['user' => 'ada@example.com', 'course' => $this->makeCourse('Kurs'), '--force' => true])
+        ->assertSuccessful();
+
+    expect(Certificate::query()->acrossBrands()->sole()->brand_id)->toBe(app('brand-context')->defaultId());
+});
+
 it('reads the mail switch in the certificate\'s brand', function () {
     Mail::fake();
     app(SettingsManager::class);
