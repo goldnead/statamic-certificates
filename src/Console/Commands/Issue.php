@@ -164,10 +164,8 @@ class Issue extends Command
             return $course;
         }
 
-        $entry = Entry::query()
-            ->where('collection', (string) config('courses.collections.courses', 'courses'))
-            ->where('slug', $course)
-            ->first();
+        $entry = Entry::whereCollection((string) config('courses.collections.courses', 'courses'))
+            ->first(fn ($entry) => $entry->slug() === $course);
 
         return $entry instanceof \Statamic\Entries\Entry ? (string) $entry->id() : null;
     }
