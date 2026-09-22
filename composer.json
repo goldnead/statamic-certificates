@@ -1,0 +1,96 @@
+{
+    "name": "goldnead/statamic-certificates",
+    "description": "Completion certificates for Statamic: a PDF when a course is finished, per-brand template, and a public verification URL a third party can check.",
+    "type": "statamic-addon",
+    "license": "proprietary",
+    "keywords": [
+        "statamic",
+        "statamic-addon",
+        "certificates",
+        "courses",
+        "lms",
+        "pdf"
+    ],
+    "authors": [
+        {
+            "name": "Adrian Goldner",
+            "email": "info@adriangoldner.com"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/goldnead/statamic-certificates/issues",
+        "source": "https://github.com/goldnead/statamic-certificates"
+    },
+    "require": {
+        "php": "^8.2",
+        "dompdf/dompdf": "^3.1",
+        "goldnead/statamic-brand-context": "^1.13",
+        "goldnead/statamic-courses": "^0.1",
+        "laravel/framework": "^12.40|^13.0",
+        "statamic/cms": "^6.0"
+    },
+    "require-dev": {
+        "larastan/larastan": "^3.0",
+        "laravel/pint": "^1.18",
+        "orchestra/testbench": "^10.0|^11.0",
+        "pestphp/pest": "^3.0|^4.0|^5.0",
+        "pestphp/pest-plugin-laravel": "^3.0|^4.0|^5.0",
+        "smalot/pdfparser": "^2.11"
+    },
+    "autoload": {
+        "psr-4": {
+            "Goldnead\\Certificates\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Goldnead\\Certificates\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "statamic": {
+            "name": "Certificates",
+            "slug": "certificates",
+            "description": "Completion certificates as PDF, with a public verification page.",
+            "url": "https://github.com/goldnead/statamic-certificates",
+            "developer": "Adrian Goldner",
+            "developer-url": "https://adriangoldner.dev"
+        },
+        "laravel": {
+            "providers": [
+                "Goldnead\\Certificates\\ServiceProvider"
+            ],
+            "aliases": {
+                "Certificates": "Goldnead\\Certificates\\Facades\\Certificates"
+            }
+        }
+    },
+    "scripts": {
+        "test": [
+            "@php vendor/bin/pest"
+        ],
+        "test:mysql": [
+            "@php vendor/bin/pest -c phpunit.mysql.xml"
+        ],
+        "lint": [
+            "@php vendor/bin/pint --test"
+        ],
+        "fix": [
+            "@php vendor/bin/pint"
+        ],
+        "analyse": [
+            "@php vendor/bin/phpstan analyse --memory-limit=1G"
+        ]
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "pixelfear/composer-dist-plugin": true,
+            "composer/installers": true,
+            "php-http/discovery": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
