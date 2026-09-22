@@ -6,6 +6,7 @@ use DateTimeInterface;
 use Goldnead\Certificates\Events\CertificateIssued;
 use Goldnead\Certificates\Events\CertificateRevoked;
 use Goldnead\Certificates\Exceptions\CourseNotFound;
+use Goldnead\Certificates\Exceptions\LearnerNameMissing;
 use Goldnead\Certificates\Models\Certificate;
 use Goldnead\Certificates\Support\CertificateCode;
 use Goldnead\Certificates\Support\Subject;
@@ -33,6 +34,7 @@ class Certificates
      * CertificateIssued fires only when this call created the row.
      *
      * @throws CourseNotFound
+     * @throws LearnerNameMissing
      */
     public function issue(mixed $subject, string $courseId, ?DateTimeInterface $issuedAt = null): Certificate
     {
@@ -48,6 +50,11 @@ class Certificates
             throw new CourseNotFound($courseId);
         }
 
+        // Never the email: the name is printed on a public page.
+        if ($subject->name === null) {
+            throw new LearnerNameMissing($subject->type, $subject->id);
+        }
+
         try {
             // Inside its own transaction so a failed insert rolls back to a
             // savepoint and leaves an enclosing transaction usable.
@@ -56,7 +63,7 @@ class Certificates
                 'subject_type' => $subject->type,
                 'subject_id' => $subject->id,
                 'course_id' => $courseId,
-                'learner_name' => $subject->name ?? $subject->email ?? $subject->id,
+                'learner_name' => $subject->name,
                 'course_title' => (string) ($course->get('title') ?? $course->slug()),
                 'issued_at' => $issuedAt ? Carbon::instance($issuedAt) : now(),
             ]));

@@ -2,7 +2,9 @@
 
 use Goldnead\Certificates\CertificatePdf;
 use Goldnead\Certificates\Events\CertificateIssued;
+use Goldnead\Certificates\Events\CertificateNotIssued;
 use Goldnead\Certificates\Exceptions\CourseNotFound;
+use Goldnead\Certificates\Exceptions\LearnerNameMissing;
 use Goldnead\Certificates\Facades\Certificates;
 use Goldnead\Certificates\Models\Certificate;
 use Goldnead\Courses\Events\CourseCompleted;
@@ -124,8 +126,30 @@ it('does not break the learner request when the event cannot be certified', func
     expect(Certificate::query()->count())->toBe(0);
 });
 
-it('falls back to the email when the user has no name', function () {
+it('refuses to issue for a user without a name, instead of printing the email publicly', function () {
     $user = $this->makeUser('ada@example.com');
 
-    expect(Certificates::issue($user, $this->makeCourse('Kurs'))->learner_name)->toBe('ada@example.com');
+    expect(fn () => Certificates::issue($user, $this->makeCourse('Kurs')))
+        ->toThrow(LearnerNameMissing::class);
+
+    expect(Certificate::query()->count())->toBe(0);
+});
+
+it('announces a refusal from the event path with its reason, and writes nothing', function () {
+    Event::fake([CertificateNotIssued::class]);
+    $user = $this->makeUser('ada@example.com');
+    $course = $this->makeCourse('Kurs');
+
+    CourseCompleted::dispatch((string) $user->id(), $course, 'kurs');
+
+    expect(Certificate::query()->count())->toBe(0);
+    Event::assertDispatched(CertificateNotIssued::class, fn (CertificateNotIssued $e) => $e->subjectId === (string) $user->id()
+        && $e->courseId === $course
+        && $e->reason === 'learner_name_missing');
+});
+
+it('uses first and last name when there is no name field', function () {
+    $user = $this->makeUser('ada@example.com', null, ['first_name' => 'Ada', 'last_name' => 'Lovelace']);
+
+    expect(Certificates::issue($user, $this->makeCourse('Kurs'))->learner_name)->toBe('Ada Lovelace');
 });
