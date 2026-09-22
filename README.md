@@ -34,13 +34,14 @@ One by hand, for a learner who completed the course (a completed enrollment in
 statamic-courses; `--force` issues without one, `--no-mail` suppresses the mail):
 
 ```bash
-php artisan certificates:issue ada@example.com {course-entry-id}
+php artisan certificates:issue ada@example.com {course-entry-id-or-slug}
 ```
 
 **Brand on the console.** The console has no current brand, so each certificate is issued in the
 brand the course's Statamic site maps to (`brand-context.sites`), or the one `--brand=<handle>`
-names. With multi-brand on and neither, the command refuses rather than stamp the default
-brand's issuer on another brand's certificate.
+names. With multi-brand off, the default brand is used. With multi-brand on, one brand only,
+that one. With multi-brand on, several brands and neither, the command refuses rather than stamp
+the default brand's issuer on another brand's certificate.
 
 ## When is a course "completed"
 
@@ -133,7 +134,8 @@ the owner of a revoked certificate 410.
 
 Fields: `code`, `code_formatted`, `course_id`, `course_title`, `learner_name`, `issued_at`,
 `is_revoked`, `download_url` (null when revoked), `verify_url`. Always for the signed-in user; a
-guest gets nothing.
+guest gets nothing. With no certificates the pair renders nothing, or its
+`{{ if no_results }}…{{ /if }}` branch when the template has one.
 
 ## Template and brand
 
