@@ -2,10 +2,10 @@
 <!--
     The identical suite against a real MySQL server. SQLite has no InnoDB key
     length limit and no utf8mb4 byte arithmetic, so a green SQLite run says
-    nothing about whether the unique indexes on lesson states, event dedupe keys
-    and enrollments build.
+    nothing about whether the unique index that makes issuing idempotent builds
+    and holds.
 
-    DB_DRIVER=mysql DB_DATABASE=courses_test vendor/bin/pest -c phpunit.mysql.xml
+    DB_DRIVER=mysql DB_DATABASE=certificates_test vendor/bin/pest -c phpunit.mysql.xml
 -->
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="./vendor/phpunit/phpunit/phpunit.xsd"
