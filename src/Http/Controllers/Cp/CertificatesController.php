@@ -93,6 +93,7 @@ class CertificatesController extends CpController
             Column::make('issued_at')->label(__('certificates::cp.col_issued_at')),
             Column::make('status')->label(__('certificates::cp.col_status')),
             Column::make('code')->label(__('certificates::cp.col_code')),
+            Column::make('revoked_reason')->label(__('certificates::cp.col_revoked_reason'))->sortable(false),
         ];
     }
 }

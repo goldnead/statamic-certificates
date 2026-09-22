@@ -57,7 +57,19 @@ it('shows the certificates to a user with manage certificates', function () {
             ->where('rows.0.learner_name', 'Ada Lovelace')
             ->where('rows.0.course_title', 'Stimmbildung im Chor')
             ->where('rows.0.status', 'valid')
-            ->has('initialColumns', 5));
+            ->has('initialColumns', 6));
+});
+
+it('shows the revoke reason in its own column', function () {
+    $certificate = Certificates::issue($this->makeUser('ada@example.com', 'Ada'), $this->makeCourse('Kurs'));
+    Certificates::revoke($certificate, 'Doppelt ausgestellt');
+
+    $this->actingAs(cpUser(['manage certificates']))
+        ->get('/cp/certificates')
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('rows.0.status', 'revoked')
+            ->where('rows.0.revoked_reason', 'Doppelt ausgestellt')
+            ->where('initialColumns.5.field', 'revoked_reason'));
 });
 
 it('lists only the current brand\'s certificates', function () {
@@ -97,8 +109,10 @@ it('revokes from the Control Panel, and only with a reason', function () {
         ->assertSessionHasErrors('reason');
     expect($certificate->fresh()->isRevoked())->toBeFalse();
 
+    app()->setLocale('de');
     $this->actingAs($user)->post('/cp/certificates/'.$certificate->id.'/revoke', ['reason' => 'Doppelt ausgestellt'])
-        ->assertRedirect('/cp/certificates');
+        ->assertRedirect('/cp/certificates')
+        ->assertSessionHas('success', 'Zertifikat '.implode('-', str_split($certificate->code, 4)).' wurde widerrufen.');
 
     expect($certificate->fresh()->revoked_reason)->toBe('Doppelt ausgestellt');
 });

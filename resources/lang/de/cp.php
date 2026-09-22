@@ -11,6 +11,7 @@ return [
     'col_issued_at' => 'Ausgestellt',
     'col_status' => 'Status',
     'col_code' => 'Prüfcode',
+    'col_revoked_reason' => 'Widerrufsgrund',
 
     'status_valid' => 'Gültig',
     'status_revoked' => 'Widerrufen',
@@ -23,7 +24,7 @@ return [
     'revoke_reason_help' => 'Nur im Control Panel sichtbar, nicht auf der Prüfseite.',
     'revoke_confirm' => 'Widerrufen',
     'cancel' => 'Abbrechen',
-    'revoked' => 'Zertifikat :code widerrufen.',
+    'revoked' => 'Zertifikat :code wurde widerrufen.',
 
     'truncated' => 'Gezeigt werden die neuesten :limit von :total Zertifikaten.',
     'empty_heading' => 'Noch keine Zertifikate ausgestellt.',

@@ -11,6 +11,7 @@ return [
     'col_issued_at' => 'Issued',
     'col_status' => 'Status',
     'col_code' => 'Code',
+    'col_revoked_reason' => 'Revocation reason',
 
     'status_valid' => 'Valid',
     'status_revoked' => 'Revoked',
@@ -23,7 +24,7 @@ return [
     'revoke_reason_help' => 'Only shown in the Control Panel, not on the verification page.',
     'revoke_confirm' => 'Revoke',
     'cancel' => 'Cancel',
-    'revoked' => 'Certificate :code revoked.',
+    'revoked' => 'Certificate :code was revoked.',
 
     'truncated' => 'Showing the newest :limit of :total certificates.',
     'empty_heading' => 'No certificates issued yet.',

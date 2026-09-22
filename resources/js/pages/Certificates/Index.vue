@@ -137,9 +137,13 @@ function formatDate(value) {
                         pill
                         color="red"
                         :text="__('certificates::cp.status_revoked')"
-                        v-tooltip="row.revoked_reason"
                     />
                     <Badge v-else pill color="green" :text="__('certificates::cp.status_valid')" />
+                </template>
+
+                <template #cell-revoked_reason="{ row }">
+                    <span v-if="row.revoked_reason">{{ row.revoked_reason }}</span>
+                    <span v-else class="text-gray-500 dark:text-gray-400">&mdash;</span>
                 </template>
 
                 <template #cell-code="{ row }">
