@@ -26,22 +26,53 @@ addon was installed:
 
 ```bash
 php artisan certificates:issue --backfill --dry-run   # what would be issued
-php artisan certificates:issue --backfill             # dated at each enrollment's completion
+php artisan certificates:issue --backfill             # dated at each enrollment's completion, no mail
+php artisan certificates:issue --backfill --mail      # the same, mailing as configured
 ```
+
+One by hand, for a learner who completed the course (a completed enrollment in
+statamic-courses; `--force` issues without one, `--no-mail` suppresses the mail):
+
+```bash
+php artisan certificates:issue ada@example.com {course-entry-id}
+```
+
+**Brand on the console.** The console has no current brand, so each certificate is issued in the
+brand the course's Statamic site maps to (`brand-context.sites`), or the one `--brand=<handle>`
+names. With multi-brand on and neither, the command refuses rather than stamp the default
+brand's issuer on another brand's certificate.
+
+## When is a course "completed"
+
+Whenever statamic-courses fires `CourseCompleted`: every lesson completed, milestones included.
+That is statamic-courses' definition, not this addon's, and it includes lessons **skipped by a
+test-out**: a learner who tested out of a phase gets the certificate without having opened those
+lessons. If a certificate should mean "did every lesson", that is a decision for the course
+design (no test-out lessons), not a setting here.
 
 ## How issuing works
 
 - **One certificate per learner and course.** A unique index on (subject, course) decides, not a
   lock, so two completion events racing each other still end in one row. Asking again returns
   the existing certificate; a revoked one stays revoked.
-- **Snapshots.** The learner's name and the course title are copied when the certificate is
-  issued. Renaming the course or the user afterwards does not change a certificate someone
-  already showed. A user without a name is certified under their email address.
+- **Snapshots.** The learner's name, the course title, the issuer, the signatory's name and
+  title, and the brand handle are copied when the certificate is issued. Renaming the course,
+  the user or the brand's settings afterwards does not change what the PDF and the verification
+  page say. Logo, signature image, accent colour and footer stay live: they are looks, not
+  statements, and a re-rendered PDF picks up the current ones.
+- **No name, no certificate.** The name is printed on a public page, so a user without one
+  (neither `name` nor `first_name`/`last_name`) is refused rather than certified under their
+  email address. The manual path throws `LearnerNameMissing`; the event path logs a warning and
+  fires `CertificateNotIssued` with the reason `learner_name_missing`. Add the name and run the
+  backfill.
 - **The code.** 20 characters of Crockford base32 from `random_bytes()` (100 bits), printed as
   `ABCD-EFGH-JKMN-PQRS-TVWX`. Typing it in lower case, with or without dashes, works.
 - **A failure does not break the learner's request.** The listener runs inside the request that
-  completed the last lesson; an error (a deleted course entry, say) is reported to the exception
-  handler and the backfill picks it up later.
+  completed the last lesson; a refusal (see above, or a deleted course entry) fires
+  `CertificateNotIssued`, any other error is reported to the exception handler, and the backfill
+  picks it up later.
+- **Revoked means gone.** A revoked certificate is not rendered, not downloadable and not mailed:
+  a mail queued before the revocation is dropped when it comes to be sent.
 
 ## PHP API
 
@@ -53,17 +84,22 @@ Certificates::find($user, $courseEntryId);                   // or null
 Certificates::for($user);                                    // the user's certificates, newest first
 Certificates::findByCode('abcd-efgh-…');
 Certificates::revoke($certificate, 'Reason');                // fires CertificateRevoked
-Certificates::pdf($certificate);                             // the PDF bytes
+Certificates::pdf($certificate);                             // the PDF bytes; throws CertificateIsRevoked
 Certificates::verifyUrl($certificate);
 Certificates::downloadUrl($certificate);
+Certificates::withoutMail(fn () => Certificates::issue($user, $id));   // issue without mailing
 ```
+
+`issue()` throws a `CertificateRefused` (`CourseNotFound`, `LearnerNameMissing`) when it cannot
+issue, and runs in the current brand: call it inside `BrandContext::runFor()` from a job or
+command.
 
 `$user` is a Statamic user, the auth guard's user model, or a user id. It is stored as
 `user` plus the auth identifier, the same id statamic-courses keys progress on. Any other
 Eloquent model is stored under its morph class.
 
 Events: `Goldnead\Certificates\Events\CertificateIssued` and `CertificateRevoked`, both carrying
-the `Certificate` model.
+the `Certificate` model, and `CertificateNotIssued` (subject id, course id, reason, message).
 
 ## Front end
 
@@ -107,8 +143,10 @@ text, and whether to mail the PDF. Logo and signature are asset references
 (`assets::logos/logo.png`); they are embedded into the PDF, nothing is fetched over the network.
 Unset values fall back to `config/certificates.php`.
 
-A certificate belongs to the brand that was current when it was issued and is always rendered
-with that brand's template, whichever brand serves the download.
+A certificate belongs to the brand that was current when it was issued. Issuer and signatory
+are frozen on the certificate then; logo, signature image, accent colour and footer are read
+from that brand's current settings whenever the PDF is rendered, whichever brand serves the
+download.
 
 To change the layout, publish the views and edit them:
 
@@ -125,13 +163,16 @@ the PDF view receives are listed in `CertificatePdf::viewData()`.
 Generated PDFs live on `certificates.storage.disk` (default `local`) under
 `certificates/{code}.pdf`. The row is the record, the file is a cache: a missing file is rendered
 again on the next download, and revoking deletes it. Use a private disk; files are only served
-through the download route. A changed template applies to PDFs rendered afterwards; delete the
-folder to re-render existing ones.
+through the download route. A changed logo, colour or footer applies to PDFs rendered
+afterwards; delete the folder to re-render existing ones (issuer and signatory stay as issued).
 
 ## Mail
 
 `CERTIFICATES_MAIL_ENABLED=true` (or the setting per brand) queues a mail with the PDF attached
-when a certificate is issued. Off by default.
+when a certificate is issued. Off by default. The switch is read in the certificate's brand. The
+backfill never mails unless `--mail` is passed; `certificates:issue --no-mail` and
+`Certificates::withoutMail()` suppress it for one run. The mail goes out through the default
+mailer and sender.
 
 ## Control Panel
 

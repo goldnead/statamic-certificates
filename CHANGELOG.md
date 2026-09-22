@@ -20,3 +20,10 @@ First version.
 - Antlers tags `{{ certificates }}` and `{{ certificates:for course="…" }}`.
 - Control Panel screen "Certificates" with search and revoke, permission `manage certificates`.
 - German and English translations.
+- Issuer, signatory and brand handle frozen on the certificate; logo, signature image, colour
+  and footer stay live.
+- No certificate without a learner name (`LearnerNameMissing`, `CertificateNotIssued`), never the
+  email address instead.
+- `certificates:issue` runs in the course's brand (`brand-context.sites`) or `--brand`, needs a
+  completed enrollment unless `--force`, and the backfill mails only with `--mail`.
+- Revoked certificates are not rendered (`CertificateIsRevoked`) and a queued mail is dropped.
