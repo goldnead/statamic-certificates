@@ -23,6 +23,10 @@ use Illuminate\Support\Carbon;
  * @property string $course_id
  * @property string $learner_name
  * @property string $course_title
+ * @property string|null $issuer_name
+ * @property string|null $signatory_name
+ * @property string|null $signatory_title
+ * @property string|null $brand_handle
  * @property Carbon $issued_at
  * @property Carbon|null $revoked_at
  * @property string|null $revoked_reason
@@ -41,6 +45,10 @@ class Certificate extends Model
         'course_id',
         'learner_name',
         'course_title',
+        'issuer_name',
+        'signatory_name',
+        'signatory_title',
+        'brand_handle',
         'issued_at',
         'revoked_at',
         'revoked_reason',

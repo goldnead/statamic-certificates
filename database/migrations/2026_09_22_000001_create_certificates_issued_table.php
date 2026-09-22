@@ -13,9 +13,12 @@ use Illuminate\Support\Facades\Schema;
  * each other must still end in one row. The losing insert fails on the index
  * and the writer reads the winner.
  *
- * **Snapshots, not references.** `learner_name` and `course_title` are copied
- * at issue time. A certificate states what was true when it was issued; renaming
- * the course or the user must not change a document someone already showed.
+ * **Snapshots, not references.** `learner_name`, `course_title`, the issuer,
+ * the signatory and the brand handle are copied at issue time. A certificate
+ * states what was true when it was issued; renaming the course, the user or
+ * the brand's settings must not change a document someone already showed.
+ * Logo, signature image, accent colour and footer stay live (they are looks,
+ * not statements).
  *
  * Key lengths stay inside InnoDB's 3072 bytes under utf8mb4:
  * (191 + 64 + 64) × 4 = 1276.
@@ -33,6 +36,10 @@ return new class extends Migration
             $table->string('course_id', 64)->index();
             $table->string('learner_name');
             $table->string('course_title');
+            $table->string('issuer_name')->nullable();
+            $table->string('signatory_name')->nullable();
+            $table->string('signatory_title')->nullable();
+            $table->string('brand_handle', 64)->nullable();
             $table->timestamp('issued_at');
             $table->timestamp('revoked_at')->nullable();
             $table->text('revoked_reason')->nullable();

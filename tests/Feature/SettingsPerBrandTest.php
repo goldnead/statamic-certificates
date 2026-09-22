@@ -53,14 +53,15 @@ it('renders each certificate with its own brand\'s template, whatever brand is c
     $nord = $brands->runFor($this->nord, fn () => Certificates::issue($ada, $this->makeCourse('Eins')));
     $sued = $brands->runFor($this->sued, fn () => Certificates::issue($grace, $this->makeCourse('Zwei')));
 
-    // Rendered while the other brand is current: the row's brand wins.
-    $nordData = $brands->runFor($this->sued, fn () => app(CertificatePdf::class)->viewData($nord));
-    expect($nordData['issuerName'])->toBe('Singschule Süd'); // viewData alone reads the current config …
+    // The live looks (accent colour) come from the row's brand, even while
+    // another brand is current.
+    $pdf = app(CertificatePdf::class);
+    $nordLooks = $brands->runFor($this->sued, fn () => $pdf->inBrandOf($nord, fn () => $pdf->viewData($nord)));
+    expect($nordLooks['accentColor'])->toBe('#cca560');
 
     $nordText = $brands->runFor($this->sued, fn () => (new Parser)->parseContent(Certificates::pdf($nord))->getText());
     $suedText = $brands->runFor($this->nord, fn () => (new Parser)->parseContent(Certificates::pdf($sued))->getText());
 
-    // … render() switches to the certificate's brand first.
     expect($nordText)->toContain('CHORAKADEMIE NORD')->not->toContain('SINGSCHULE')
         ->and($suedText)->toContain('SINGSCHULE SÜD')->not->toContain('CHORAKADEMIE');
 });
@@ -72,6 +73,42 @@ it('shows the issuing brand on the verification page, with no brand in the sessi
         ->assertOk()
         ->assertSee('Singschule Süd')
         ->assertDontSee('Chorakademie Nord');
+});
+
+it('snapshots issuer, signatory and brand at issue time, and keeps them when settings change', function () {
+    $brands = app('brand-context');
+    $manager = app(SettingsManager::class);
+    $brands->runFor($this->nord, fn () => $manager->for('certificates')->save([
+        'template.signatory_name' => 'Adrian Goldner',
+        'template.signatory_title' => 'Kursleitung',
+    ]));
+
+    $certificate = $brands->runFor($this->nord, fn () => Certificates::issue($this->makeUser('ada@example.com', 'Ada'), $this->makeCourse('Kurs')));
+
+    expect($certificate->issuer_name)->toBe('Chorakademie Nord')
+        ->and($certificate->signatory_name)->toBe('Adrian Goldner')
+        ->and($certificate->signatory_title)->toBe('Kursleitung')
+        ->and($certificate->brand_handle)->toBe('nord');
+
+    $brands->runFor($this->nord, fn () => $manager->for('certificates')->save([
+        'template.issuer_name' => 'Umbenannt GmbH',
+        'template.signatory_name' => 'Jemand Anderes',
+        'template.signatory_title' => 'Vorstand',
+    ]));
+    $manager->apply(force: true);
+
+    $this->get('/certificates/verify/'.$certificate->code)
+        ->assertSee('Chorakademie Nord')
+        ->assertDontSee('Umbenannt');
+
+    // A regenerated PDF reads the row, not the live settings.
+    app(CertificatePdf::class)->forget($certificate);
+    $text = (new Parser)->parseContent(Certificates::pdf($certificate->fresh()))->getText();
+
+    expect($text)->toContain('CHORAKADEMIE NORD')
+        ->and($text)->toContain('Adrian Goldner, Kursleitung')
+        ->and($text)->not->toContain('UMBENANNT')
+        ->and($text)->not->toContain('Jemand Anderes');
 });
 
 it('keeps one certificate per learner and course across brands', function () {

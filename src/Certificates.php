@@ -65,6 +65,12 @@ class Certificates
                 'course_id' => $courseId,
                 'learner_name' => $subject->name,
                 'course_title' => (string) ($course->get('title') ?? $course->slug()),
+                // The current brand's settings, snapshotted: the command runs
+                // this inside runFor() the course's brand.
+                'issuer_name' => $this->setting('issuer_name'),
+                'signatory_name' => $this->setting('signatory_name'),
+                'signatory_title' => $this->setting('signatory_title'),
+                'brand_handle' => $this->currentBrandHandle(),
                 'issued_at' => $issuedAt ? Carbon::instance($issuedAt) : now(),
             ]));
         } catch (UniqueConstraintViolationException) {
@@ -141,6 +147,29 @@ class Certificates
     public function pdf(Certificate $certificate): string
     {
         return $this->pdf->get($certificate);
+    }
+
+    protected function setting(string $key): ?string
+    {
+        $value = config('certificates.template.'.$key);
+
+        return is_string($value) && trim($value) !== '' ? mb_substr(trim($value), 0, 255) : null;
+    }
+
+    protected function currentBrandHandle(): ?string
+    {
+        if (! app()->bound('brand-context')) {
+            return null;
+        }
+
+        try {
+            $handle = app('brand-context')->current()->handle ?? null;
+        } catch (\RuntimeException) {
+            // No default brand yet (brand-context's migrations not run).
+            return null;
+        }
+
+        return is_string($handle) ? $handle : null;
     }
 
     public function verifyUrl(Certificate $certificate): ?string

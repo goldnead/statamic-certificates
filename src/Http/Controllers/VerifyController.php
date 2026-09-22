@@ -2,7 +2,6 @@
 
 namespace Goldnead\Certificates\Http\Controllers;
 
-use Goldnead\Certificates\CertificatePdf;
 use Goldnead\Certificates\Models\Certificate;
 use Goldnead\Certificates\Support\CertificateCode;
 use Illuminate\Http\Response;
@@ -18,7 +17,7 @@ use Illuminate\Routing\Controller;
  */
 class VerifyController extends Controller
 {
-    public function __invoke(string $code, CertificatePdf $pdf): Response
+    public function __invoke(string $code): Response
     {
         // A route cache built while the switch was on must not keep it open.
         abort_unless(config('certificates.routes.enabled', true), 404);
@@ -34,9 +33,8 @@ class VerifyController extends Controller
             default => 'valid',
         };
 
-        $issuerName = $certificate
-            ? $pdf->inBrandOf($certificate, fn () => config('certificates.template.issuer_name'))
-            : null;
+        // The snapshot from issue time, never the brand's current settings.
+        $issuerName = $certificate?->issuer_name;
 
         return response()
             ->view('certificates::verify', [

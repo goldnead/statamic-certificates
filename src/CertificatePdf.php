@@ -92,9 +92,11 @@ class CertificatePdf
             'verifyUrl' => Route::has('certificates.verify')
                 ? route('certificates.verify', ['code' => $certificate->code])
                 : null,
-            'issuerName' => $this->string($template['issuer_name'] ?? null),
-            'signatoryName' => $this->string($template['signatory_name'] ?? null),
-            'signatoryTitle' => $this->string($template['signatory_title'] ?? null),
+            // Snapshotted on the row at issue time: statements, not looks.
+            'issuerName' => $this->string($certificate->issuer_name),
+            'signatoryName' => $this->string($certificate->signatory_name),
+            'signatoryTitle' => $this->string($certificate->signatory_title),
+            // Live from the brand's settings: looks, not statements.
             'footer' => $this->string($template['footer'] ?? null),
             'accentColor' => $this->color($template['accent_color'] ?? null),
             'logo' => $this->embed($template['logo'] ?? null, 'logo'),
