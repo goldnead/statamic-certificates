@@ -16,6 +16,13 @@ it('shows a valid certificate with learner, course, date and issuer', function (
         ->assertHeader('X-Robots-Tag', 'noindex, nofollow');
 });
 
+it('keeps a side gutter on narrow screens', function () {
+    $this->get('/certificates/verify/ZZZZZZZZZZZZZZZZZZZZ')
+        ->assertSee('name="viewport"', false)
+        ->assertSee('body { margin: 0; padding: 0 16px;', false)
+        ->assertSee('box-sizing: border-box', false);
+});
+
 it('accepts the code as a person types it', function () {
     $certificate = Certificates::issue($this->makeUser('ada@example.com', 'Ada'), $this->makeCourse('Kurs'));
     $typed = strtolower(implode('-', str_split($certificate->code, 4)));

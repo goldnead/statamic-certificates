@@ -15,8 +15,11 @@
     <meta name="robots" content="noindex, nofollow">
     <title>{{ __('certificates::messages.verify.title') }}</title>
     <style>
-        body { margin: 0; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; color: #1f2937; background: #f9fafb; }
+        *, *::before, *::after { box-sizing: border-box; }
+        body { margin: 0; padding: 0 16px; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; color: #1f2937; background: #f9fafb; }
         main { max-width: 36rem; margin: 4rem auto; padding: 2rem; background: #fff; border: 1px solid #e5e7eb; border-radius: 6px; }
+        dd { overflow-wrap: anywhere; }
+        @media (max-width: 480px) { main { margin: 1.5rem auto; padding: 1.25rem; } }
         h1 { font-size: 1.25rem; margin: 0 0 1rem; }
         .status { font-weight: 600; margin: 0 0 1.5rem; }
         .valid { color: #047857; }
