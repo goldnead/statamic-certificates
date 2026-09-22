@@ -87,6 +87,8 @@ abstract class TestCase extends AddonTestCase
         $app['config']->set('brand-context.multi_brand', false);
         $app['config']->set('brand-context.cp.enabled', false);
         $app['config']->set('queue.default', 'sync');
+        // More than one user (learners and CP users) needs Pro.
+        $app['config']->set('statamic.editions.pro', true);
         $app['config']->set('filesystems.disks.certificates-test', [
             'driver' => 'local',
             'root' => __DIR__.'/__fixtures__/storage',
