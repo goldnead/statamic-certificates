@@ -1,0 +1,68 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1200px; height: 630px; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+    background: radial-gradient(1200px 700px at 78% 22%, #5A420C 0%, #2E2206 55%, #0E0A02 100%);
+    color: #fff; overflow: hidden; position: relative;
+  }
+  .wrap { display: flex; height: 100%; align-items: center; padding: 0 92px; gap: 64px; }
+  .copy { max-width: 660px; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-size: 22px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
+    color: #F3E2B0; margin-bottom: 26px;
+  }
+  .eyebrow .dot { width: 12px; height: 12px; border-radius: 50%; background: #D9B23C; box-shadow: 0 0 18px #D9B23C; }
+  h1 { font-size: 76px; line-height: 1.02; font-weight: 800; letter-spacing: -.02em; }
+  h1 .accent { background: linear-gradient(90deg,#F3E2B0,#E2C063); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  p.sub { margin-top: 28px; font-size: 30px; line-height: 1.35; color: #EAE2CF; font-weight: 400; }
+  .badges { margin-top: 40px; display: flex; gap: 14px; }
+  .badge { font-size: 22px; font-weight: 600; padding: 12px 22px; border-radius: 999px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.16); color: #F3E2B0; white-space: nowrap; }
+  .art { flex: 1; display: flex; align-items: center; justify-content: center; }
+  .glyph { width: 360px; height: 360px; filter: drop-shadow(0 30px 60px rgba(0,0,0,.45)); }
+  .corner { position: absolute; right: -120px; bottom: -160px; width: 520px; height: 520px; border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #C9A22747, transparent 60%); }
+</style>
+</head>
+<body>
+  <div class="corner"></div>
+  <div class="wrap">
+    <div class="copy">
+      <span class="eyebrow"><span class="dot"></span>Statamic Addon</span>
+      <h1>Statamic<br><span class="accent">Certificates</span></h1>
+      <p class="sub">A PDF certificate when a course is completed, and a page that verifies it.</p>
+      <div class="badges">
+        <span class="badge">PDF on completion</span>
+        <span class="badge">Verify page</span>
+        <span class="badge">Revocation</span>
+      </div>
+    </div>
+    <div class="art">
+      <svg class="glyph" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#C9A227"/><stop offset="1" stop-color="#5E4308"/>
+          </linearGradient>
+          <filter id="sh" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#3F2C04" flood-opacity="0.36"/>
+          </filter>
+        </defs>
+        <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+        <!-- a seal with ribbon tails and a tick, see icon.svg -->
+        <g filter="url(#sh)">
+          <path d="M206 318 L170 444 L208 424 L236 456 L262 338 Z" fill="#FFFFFF"/>
+          <path d="M306 318 L342 444 L304 424 L276 456 L250 338 Z" fill="#FFFFFF"/>
+          <path d="M256.0 68.0 L280.2 92.4 L311.9 79.1 L324.9 110.9 L359.2 110.8 L359.1 145.1 L390.9 158.1 L377.6 189.8 L402.0 214.0 L377.6 238.2 L390.9 269.9 L359.1 282.9 L359.2 317.2 L324.9 317.1 L311.9 348.9 L280.2 335.6 L256.0 360.0 L231.8 335.6 L200.1 348.9 L187.1 317.1 L152.8 317.2 L152.9 282.9 L121.1 269.9 L134.4 238.2 L110.0 214.0 L134.4 189.8 L121.1 158.1 L152.9 145.1 L152.8 110.8 L187.1 110.9 L200.1 79.1 L231.8 92.4 Z" fill="#FFFFFF"/>
+        </g>
+        <circle cx="256" cy="214" r="96" fill="url(#bg)"/>
+        <path d="M212 216 L244 248 L302 184" stroke="#FFFFFF" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+  </div>
+</body>
+</html>

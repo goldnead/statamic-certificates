@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#C9A227"/>
+      <stop offset="1" stop-color="#5E4308"/>
+    </linearGradient>
+    <filter id="sh" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#3F2C04" flood-opacity="0.36"/>
+    </filter>
+  </defs>
+
+  <!-- rounded square background -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- A seal with two ribbon tails and a tick: the mark that sits on a
+       certificate, not the sheet itself. A white sheet with lines is what
+       Invoices, Activity and Email Templates already draw.
+
+       Antique gold, darker than Funnels' yellow and without Lead Magnets'
+       orange, because a seal is gold, and the tick in the middle is what
+       says "completed". -->
+  <g filter="url(#sh)">
+    <path d="M206 318 L170 444 L208 424 L236 456 L262 338 Z" fill="#FFFFFF"/>
+    <path d="M306 318 L342 444 L304 424 L276 456 L250 338 Z" fill="#FFFFFF"/>
+    <path d="M256.0 68.0 L280.2 92.4 L311.9 79.1 L324.9 110.9 L359.2 110.8 L359.1 145.1 L390.9 158.1 L377.6 189.8 L402.0 214.0 L377.6 238.2 L390.9 269.9 L359.1 282.9 L359.2 317.2 L324.9 317.1 L311.9 348.9 L280.2 335.6 L256.0 360.0 L231.8 335.6 L200.1 348.9 L187.1 317.1 L152.8 317.2 L152.9 282.9 L121.1 269.9 L134.4 238.2 L110.0 214.0 L134.4 189.8 L121.1 158.1 L152.9 145.1 L152.8 110.8 L187.1 110.9 L200.1 79.1 L231.8 92.4 Z" fill="#FFFFFF"/>
+  </g>
+
+  <!-- the inner disc and the tick -->
+  <circle cx="256" cy="214" r="96" fill="url(#bg)"/>
+  <path d="M212 216 L244 248 L302 184" stroke="#FFFFFF" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
