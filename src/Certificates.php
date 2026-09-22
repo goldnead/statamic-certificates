@@ -26,7 +26,36 @@ use Statamic\Facades\Entry;
  */
 class Certificates
 {
+    /** Depth of withoutMail() calls in progress. */
+    protected int $mailSuppressed = 0;
+
     public function __construct(protected CertificatePdf $pdf) {}
+
+    /**
+     * Run a callback during which issued certificates are not mailed, whatever
+     * `mail.enabled` says. The backfill uses it: mailing a learner a
+     * certificate for a course finished months ago is a surprise, not a service.
+     *
+     * @template T
+     *
+     * @param  callable(): T  $callback
+     * @return T
+     */
+    public function withoutMail(callable $callback): mixed
+    {
+        $this->mailSuppressed++;
+
+        try {
+            return $callback();
+        } finally {
+            $this->mailSuppressed--;
+        }
+    }
+
+    public function mailSuppressed(): bool
+    {
+        return $this->mailSuppressed > 0;
+    }
 
     /**
      * The certificate for this subject and course, issued now if there is none.

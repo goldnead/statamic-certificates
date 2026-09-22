@@ -2,6 +2,8 @@
 
 namespace Goldnead\Certificates\Listeners;
 
+use Goldnead\Certificates\CertificatePdf;
+use Goldnead\Certificates\Certificates;
 use Goldnead\Certificates\Events\CertificateIssued;
 use Goldnead\Certificates\Mail\CertificateMail;
 use Goldnead\Certificates\Support\Subject;
@@ -16,13 +18,20 @@ use Illuminate\Support\Facades\Mail;
  */
 class MailCertificate
 {
+    public function __construct(protected Certificates $certificates, protected CertificatePdf $pdf) {}
+
     public function handle(CertificateIssued $event): void
     {
-        if (! config('certificates.mail.enabled', false)) {
+        $certificate = $event->certificate;
+
+        // The switch is a per-brand setting: read it in the certificate's
+        // brand, not in whatever brand the announcing process runs under.
+        $enabled = $this->pdf->inBrandOf($certificate, fn () => (bool) config('certificates.mail.enabled', false));
+
+        if (! $enabled || $this->certificates->mailSuppressed()) {
             return;
         }
 
-        $certificate = $event->certificate;
         $subject = Subject::find($certificate->subject_type, $certificate->subject_id);
 
         if ($subject?->email === null) {

@@ -80,15 +80,60 @@ it('attaches a real PDF to the mail', function () {
     $mail->assertSeeInText('Kurs');
 });
 
-it('issues by hand from the command, once', function () {
+it('refuses to issue by hand without a completed enrollment, unless forced', function () {
     $ada = $this->makeUser('ada@example.com', 'Ada');
     $course = $this->makeCourse('Kurs');
+    Enrollment::query()->create(['user_id' => (string) $ada->id(), 'course_entry_id' => $course, 'current_week' => 1]);
+
+    $this->artisan('certificates:issue', ['user' => 'ada@example.com', 'course' => $course])
+        ->expectsOutputToContain('--force')
+        ->assertFailed();
+    expect(Certificate::query()->count())->toBe(0);
+
+    $this->artisan('certificates:issue', ['user' => 'ada@example.com', 'course' => $course, '--force' => true])->assertSuccessful();
+    expect(Certificate::query()->count())->toBe(1);
+});
+
+it('issues by hand from the command, once, dated at the completion', function () {
+    $ada = $this->makeUser('ada@example.com', 'Ada');
+    $course = $this->makeCourse('Kurs');
+    $completedAt = Carbon::parse('2026-04-02 09:30:00');
+    Enrollment::query()->create(['user_id' => (string) $ada->id(), 'course_entry_id' => $course, 'current_week' => 1, 'completed_at' => $completedAt]);
 
     $this->artisan('certificates:issue', ['user' => 'ada@example.com', 'course' => $course])->assertSuccessful();
     $this->artisan('certificates:issue', ['user' => (string) $ada->id(), 'course' => $course])
         ->expectsOutputToContain('Already issued')
         ->assertSuccessful();
 
+    expect(Certificate::query()->count())->toBe(1)
+        ->and(Certificate::query()->sole()->issued_at->equalTo($completedAt))->toBeTrue();
+});
+
+it('does not mail from the backfill unless asked to', function () {
+    Mail::fake();
+    config(['certificates.mail.enabled' => true]);
+    $ada = $this->makeUser('ada@example.com', 'Ada');
+    $grace = $this->makeUser('grace@example.com', 'Grace');
+    $course = $this->makeCourse('Kurs');
+    Enrollment::query()->create(['user_id' => (string) $ada->id(), 'course_entry_id' => $course, 'current_week' => 1, 'completed_at' => now()]);
+
+    $this->artisan('certificates:issue', ['--backfill' => true])->assertSuccessful();
+    Mail::assertNothingQueued();
+
+    Enrollment::query()->create(['user_id' => (string) $grace->id(), 'course_entry_id' => $course, 'current_week' => 1, 'completed_at' => now()]);
+    $this->artisan('certificates:issue', ['--backfill' => true, '--mail' => true])->assertSuccessful();
+    Mail::assertQueued(CertificateMail::class, 1);
+});
+
+it('does not mail a manual issue with --no-mail', function () {
+    Mail::fake();
+    config(['certificates.mail.enabled' => true]);
+    $ada = $this->makeUser('ada@example.com', 'Ada');
+
+    $this->artisan('certificates:issue', ['user' => 'ada@example.com', 'course' => $this->makeCourse('Kurs'), '--force' => true, '--no-mail' => true])
+        ->assertSuccessful();
+
+    Mail::assertNothingQueued();
     expect(Certificate::query()->count())->toBe(1);
 });
 

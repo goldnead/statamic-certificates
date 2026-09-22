@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Facade;
  * @method static \Goldnead\Certificates\Models\Certificate revoke(\Goldnead\Certificates\Models\Certificate $certificate, string $reason)
  * @method static string pdf(\Goldnead\Certificates\Models\Certificate $certificate)
  * @method static string|null verifyUrl(\Goldnead\Certificates\Models\Certificate $certificate)
+ * @method static mixed withoutMail(callable $callback)
+ * @method static bool mailSuppressed()
  * @method static string|null downloadUrl(\Goldnead\Certificates\Models\Certificate $certificate)
  *
  * @see Manager

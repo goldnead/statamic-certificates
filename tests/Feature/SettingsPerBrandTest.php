@@ -4,8 +4,13 @@ use Goldnead\BrandContext\Models\Brand;
 use Goldnead\BrandContext\Settings\SettingsManager;
 use Goldnead\BrandContext\Settings\SettingsRegistry;
 use Goldnead\Certificates\CertificatePdf;
+use Goldnead\Certificates\Events\CertificateIssued;
 use Goldnead\Certificates\Facades\Certificates;
+use Goldnead\Certificates\Listeners\MailCertificate;
+use Goldnead\Certificates\Mail\CertificateMail;
 use Goldnead\Certificates\Models\Certificate;
+use Goldnead\Courses\Models\Enrollment;
+use Illuminate\Support\Facades\Mail;
 use Smalot\PdfParser\Parser;
 
 beforeEach(function () {
@@ -109,6 +114,65 @@ it('snapshots issuer, signatory and brand at issue time, and keeps them when set
         ->and($text)->toContain('Adrian Goldner, Kursleitung')
         ->and($text)->not->toContain('UMBENANNT')
         ->and($text)->not->toContain('Jemand Anderes');
+});
+
+it('issues from the command in the brand of the course\'s site', function () {
+    config(['brand-context.sites' => ['default' => 'sued']]);
+    $ada = $this->makeUser('ada@example.com', 'Ada');
+    $course = $this->makeCourse('Kurs');
+
+    $this->artisan('certificates:issue', ['user' => 'ada@example.com', 'course' => $course, '--force' => true])->assertSuccessful();
+
+    $certificate = Certificate::query()->acrossBrands()->sole();
+    expect($certificate->brand_id)->toBe($this->sued)
+        ->and($certificate->brand_handle)->toBe('sued')
+        ->and($certificate->issuer_name)->toBe('Singschule Süd');
+});
+
+it('backfills each certificate in its course\'s brand', function () {
+    config(['brand-context.sites' => ['default' => 'nord']]);
+    $ada = $this->makeUser('ada@example.com', 'Ada');
+    $course = $this->makeCourse('Kurs');
+    Enrollment::query()->create(['user_id' => (string) $ada->id(), 'course_entry_id' => $course, 'current_week' => 1, 'completed_at' => now()]);
+
+    $this->artisan('certificates:issue', ['--backfill' => true])->assertSuccessful();
+
+    expect(Certificate::query()->acrossBrands()->sole()->issuer_name)->toBe('Chorakademie Nord');
+});
+
+it('takes --brand when the course names none', function () {
+    $this->makeUser('ada@example.com', 'Ada');
+
+    $this->artisan('certificates:issue', ['user' => 'ada@example.com', 'course' => $this->makeCourse('Kurs'), '--force' => true, '--brand' => 'nord'])
+        ->assertSuccessful();
+
+    expect(Certificate::query()->acrossBrands()->sole()->brand_handle)->toBe('nord');
+});
+
+it('refuses to guess a brand from the console', function () {
+    $this->makeUser('ada@example.com', 'Ada');
+
+    $this->artisan('certificates:issue', ['user' => 'ada@example.com', 'course' => $this->makeCourse('Kurs'), '--force' => true])
+        ->expectsOutputToContain('--brand')
+        ->assertFailed();
+
+    expect(Certificate::query()->acrossBrands()->count())->toBe(0);
+});
+
+it('reads the mail switch in the certificate\'s brand', function () {
+    Mail::fake();
+    app(SettingsManager::class);
+    app('brand-context')->runFor($this->nord, fn () => app(SettingsManager::class)->for('certificates')->save(['mail.enabled' => true]));
+
+    $certificate = app('brand-context')->runFor($this->nord, fn () => Certificates::withoutMail(
+        fn () => Certificates::issue($this->makeUser('ada@example.com', 'Ada'), $this->makeCourse('Kurs'))
+    ));
+    Mail::assertNothingQueued();
+
+    // Announced while the other brand is current: nord's switch decides.
+    app('brand-context')->runFor($this->sued, fn () => app(MailCertificate::class)->handle(new CertificateIssued($certificate)));
+
+    Mail::assertQueued(CertificateMail::class, 1);
 });
 
 it('keeps one certificate per learner and course across brands', function () {
