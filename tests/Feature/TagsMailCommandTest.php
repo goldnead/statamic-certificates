@@ -136,6 +136,23 @@ it('does not mail from the backfill unless asked to', function () {
     Mail::assertQueued(CertificateMail::class, 1);
 });
 
+it('takes the course by slug as well as by id', function () {
+    $ada = $this->makeUser('ada@example.com', 'Ada');
+    $course = $this->makeCourse('Stimmbildung im Chor');
+    Enrollment::query()->create(['user_id' => (string) $ada->id(), 'course_entry_id' => $course, 'current_week' => 1, 'completed_at' => now()]);
+
+    $this->artisan('certificates:issue', ['user' => 'ada@example.com', 'course' => 'stimmbildung-im-chor'])->assertSuccessful();
+    $this->artisan('certificates:issue', ['user' => 'ada@example.com', 'course' => $course])
+        ->expectsOutputToContain('Already issued')
+        ->assertSuccessful();
+
+    expect(Certificate::query()->sole()->course_id)->toBe($course);
+
+    $this->artisan('certificates:issue', ['user' => 'ada@example.com', 'course' => 'gibt-es-nicht'])
+        ->expectsOutputToContain('No course')
+        ->assertFailed();
+});
+
 it('does not mail a manual issue with --no-mail', function () {
     Mail::fake();
     config(['certificates.mail.enabled' => true]);

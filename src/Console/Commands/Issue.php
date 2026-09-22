@@ -8,6 +8,7 @@ use Goldnead\Certificates\Support\Subject;
 use Goldnead\Courses\Models\Enrollment;
 use Illuminate\Console\Command;
 use RuntimeException;
+use Statamic\Facades\Entry;
 use Statamic\Facades\User;
 use Throwable;
 
@@ -36,7 +37,7 @@ class Issue extends Command
 {
     protected $signature = 'certificates:issue
         {user? : The user id (or email)}
-        {course? : The course entry id}
+        {course? : The course entry id or slug}
         {--backfill : Issue for every completed course enrollment that has no certificate}
         {--dry-run : With --backfill, list what would be issued}
         {--force : Issue by hand even without a completed enrollment}
@@ -68,6 +69,16 @@ class Issue extends Command
 
             return self::FAILURE;
         }
+
+        $courseId = $this->courseId($course);
+
+        if ($courseId === null) {
+            $this->error("No course [{$course}]: pass the course entry's id or its slug.");
+
+            return self::FAILURE;
+        }
+
+        $course = $courseId;
 
         $enrollment = Enrollment::query()
             ->where('user_id', Subject::of($subject)->id)
@@ -142,6 +153,23 @@ class Issue extends Command
         $this->info(($dryRun ? 'Would issue' : 'Issued')." {$issued}, already had one {$skipped}, failed {$failed}.".($mail || $dryRun ? '' : ' No mail sent (pass --mail to send).'));
 
         return $failed > 0 ? self::FAILURE : self::SUCCESS;
+    }
+
+    /**
+     * The entry id for an id or a slug in statamic-courses' course collection.
+     */
+    protected function courseId(string $course): ?string
+    {
+        if (Entry::find($course)) {
+            return $course;
+        }
+
+        $entry = Entry::query()
+            ->where('collection', (string) config('courses.collections.courses', 'courses'))
+            ->where('slug', $course)
+            ->first();
+
+        return $entry instanceof \Statamic\Entries\Entry ? (string) $entry->id() : null;
     }
 
     /**
