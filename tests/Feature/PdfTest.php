@@ -25,6 +25,36 @@ it('renders a real PDF that names the learner and the course', function () {
         ->and($text)->toContain(implode('-', str_split($certificate->code, 4)));
 });
 
+dataset('layouts', [
+    'normal' => ['Ana Beispiel', 'Stimmbildung im Chor'],
+    'long name and title' => [
+        'Bärbel Größ-Öztürk-Weißenfels von Überlingen zu Hohenstein-Ernstthal',
+        'Stimme zuerst: Grundlagen der individuellen stimmtechnischen Bildung für Chorsängerinnen und Chorsänger in gemischten Ensembles – Aufbaukurs mit Einstufungstest und Abschlusskolloquium',
+    ],
+    'maximum lengths' => [str_repeat('Namenteil ', 25), str_repeat('Kurstitelwort ', 18)],
+]);
+
+it('fits on exactly one page, code and verification URL included', function (string $name, string $title) {
+    config(['certificates.template.footer' => 'Nordlicht Studio · Musterstraße 1 · 20095 Hamburg']);
+    $certificate = Certificates::issue($this->makeUser('ada@example.com', $name), $this->makeCourse($title));
+
+    $pages = (new Parser)->parseContent(Certificates::pdf($certificate))->getPages();
+    $firstPage = preg_replace('/\s+/', ' ', $pages[0]->getText());
+
+    // Drawn on page 1 is not enough: dompdf happily draws below the media
+    // box, where no viewer shows it. Every text baseline must sit inside the
+    // frame, which is 10 mm (28.3 pt) in from each edge of the 595 pt page.
+    $baselines = array_map(fn (array $item) => (float) $item[0][5], $pages[0]->getDataTm());
+
+    expect(min($baselines))->toBeGreaterThan(30.0)
+        ->and(max($baselines))->toBeLessThan(595.0 - 30.0);
+
+    expect($pages)->toHaveCount(1)
+        ->and($firstPage)->toContain(implode('-', str_split($certificate->code, 4)))
+        ->and($firstPage)->toContain('/certificates/verify/'.$certificate->code)
+        ->and($firstPage)->toContain('Musterstraße 1');
+})->with('layouts');
+
 it('prints the verification URL on the certificate', function () {
     $certificate = Certificates::issue($this->makeUser('ada@example.com', 'Ada'), $this->makeCourse('Kurs'));
 
