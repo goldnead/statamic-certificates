@@ -27,6 +27,17 @@ it('lists the signed-in user\'s certificates with download and verify URLs', fun
         ->and($out)->toContain('/certificates/verify/'.$certificate->code);
 });
 
+it('renders nothing but no_results when there are no certificates', function () {
+    $this->actingAs($this->makeUser('ada@example.com', 'Ada'));
+
+    expect(renderAntlers('{{ certificates }}[{{ course_title }}]{{ /certificates }}'))->toBe('')
+        ->and(renderAntlers('{{ certificates }}{{ if no_results }}Keine{{ else }}[{{ course_title }}]{{ /if }}{{ /certificates }}'))->toBe('Keine');
+
+    auth()->logout();
+
+    expect(renderAntlers('{{ certificates }}[{{ course_title }}]{{ /certificates }}'))->toBe('');
+});
+
 it('finds the certificate for one course, and nothing for a guest or another course', function () {
     $ada = $this->makeUser('ada@example.com', 'Ada');
     $course = $this->makeCourse('Kurs');

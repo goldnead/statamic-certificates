@@ -18,23 +18,36 @@ use Statamic\Tags\Tags;
  * issued_at, is_revoked, download_url, verify_url. A guest gets nothing;
  * `{{ certificates:for }}` renders nothing when there is no certificate.
  * Revoked certificates are listed with is_revoked and no download_url.
+ * Without certificates the pair renders nothing, or its `{{ if no_results }}`
+ * branch when it has one.
  */
 class Certificates extends Tags
 {
     protected static $handle = 'certificates';
 
     /**
-     * @return list<array<string, mixed>>
+     * @return list<array<string, mixed>>|string|array<string, mixed>
      */
-    public function index(): array
+    public function index(): array|string
     {
         $user = Subject::current();
+        $items = $user
+            ? $this->manager()->for($user)->map(fn (Certificate $c) => $this->toArray($c))->values()->all()
+            : [];
 
-        if (! $user) {
-            return [];
-        }
+        return $items === [] ? $this->noResults() : $items;
+    }
 
-        return $this->manager()->for($user)->map(fn (Certificate $c) => $this->toArray($c))->values()->all();
+    /**
+     * Nothing, so an empty pair does not render its body once with blank
+     * values. A template that asks `{{ if no_results }}` gets that flag, as
+     * with core's tags.
+     *
+     * @return string|array<string, mixed>
+     */
+    protected function noResults(): string|array
+    {
+        return str_contains((string) $this->content, 'no_results') ? $this->parseNoResults() : '';
     }
 
     /**
