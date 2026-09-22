@@ -2,8 +2,12 @@
 
 use Goldnead\Certificates\CertificatePdf;
 use Goldnead\Certificates\Events\CertificateRevoked;
+use Goldnead\Certificates\Exceptions\CertificateIsRevoked;
 use Goldnead\Certificates\Facades\Certificates;
+use Goldnead\Certificates\Mail\CertificateMail;
+use Goldnead\Certificates\Models\Certificate;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 
 it('gives the owner the PDF', function () {
@@ -62,6 +66,28 @@ it('stops serving and deletes the stored PDF of a revoked certificate', function
 
     expect(Storage::disk('certificates-test')->exists($path))->toBeFalse();
     $this->actingAs($ada)->get('/certificates/'.$certificate->code.'/download')->assertStatus(410);
+});
+
+it('refuses to render or serve the PDF of a revoked certificate', function () {
+    $certificate = Certificates::issue($this->makeUser('ada@example.com', 'Ada'), $this->makeCourse('Kurs'));
+    Certificates::revoke($certificate, 'Aberkannt');
+
+    expect(fn () => Certificates::pdf($certificate))->toThrow(CertificateIsRevoked::class)
+        ->and(fn () => app(CertificatePdf::class)->render($certificate))->toThrow(CertificateIsRevoked::class)
+        ->and(Storage::disk('certificates-test')->exists(app(CertificatePdf::class)->path($certificate)))->toBeFalse();
+});
+
+it('does not send a mail that was queued before the certificate was revoked', function () {
+    config(['mail.default' => 'array']);
+    $certificate = Certificates::issue($this->makeUser('ada@example.com', 'Ada'), $this->makeCourse('Kurs'));
+    $mail = new CertificateMail($certificate);
+
+    // Revoked between queueing and sending: the queued copy holds the old row.
+    Certificate::query()->whereKey($certificate->id)->update(['revoked_at' => now(), 'revoked_reason' => 'x']);
+
+    Mail::to('ada@example.com')->send($mail);
+
+    expect(app('mailer')->getSymfonyTransport()->messages())->toHaveCount(0);
 });
 
 it('does not reissue a revoked certificate', function () {

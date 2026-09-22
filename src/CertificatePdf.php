@@ -6,6 +6,7 @@ use Dompdf\Adapter\CPDF;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use Goldnead\BrandContext\BrandManager;
+use Goldnead\Certificates\Exceptions\CertificateIsRevoked;
 use Goldnead\Certificates\Models\Certificate;
 use Goldnead\Certificates\Support\CertificateCode;
 use Illuminate\Contracts\Filesystem\Filesystem;
@@ -31,8 +32,13 @@ use Throwable;
  */
 class CertificatePdf
 {
+    /**
+     * @throws CertificateIsRevoked
+     */
     public function get(Certificate $certificate): string
     {
+        $this->refuseRevoked($certificate);
+
         $disk = $this->disk();
         $path = $this->path($certificate);
 
@@ -51,8 +57,13 @@ class CertificatePdf
         $this->disk()->delete($this->path($certificate));
     }
 
+    /**
+     * @throws CertificateIsRevoked
+     */
     public function render(Certificate $certificate): string
     {
+        $this->refuseRevoked($certificate);
+
         /** @var view-string $view */
         $view = 'certificates::pdf';
 
@@ -121,6 +132,13 @@ class CertificatePdf
         }
 
         return $callback();
+    }
+
+    protected function refuseRevoked(Certificate $certificate): void
+    {
+        if ($certificate->isRevoked()) {
+            throw new CertificateIsRevoked($certificate->code);
+        }
     }
 
     protected function disk(): Filesystem
