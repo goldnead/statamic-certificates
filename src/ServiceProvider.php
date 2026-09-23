@@ -15,8 +15,6 @@ class ServiceProvider extends AddonServiceProvider
      * in vite.config.js.
      *
      * Untyped on purpose: the parent declares it without a type.
-     *
-     * @phpstan-ignore-next-line property.defaultValue
      */
     protected $vite = [
         'hotFile' => __DIR__.'/../dist/hot',
