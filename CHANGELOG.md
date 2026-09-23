@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.1 (2026-09-23)
+
+### Changed
+- Works with statamic-courses 0.2 (`^0.1 || ^0.2`).
+
 ## 0.1.0 (2026-09-22)
 
 First release.
