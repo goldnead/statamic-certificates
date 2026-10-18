@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.6 (2026-10-18)
+
+### Changed
+
+- Compatible with statamic-courses 0.6 (`^0.6` added to the constraint). Courses 0.6 only adds a map provider for the funnels
+  map; nothing this addon reads has changed.
+
 ## 0.1.5 (2026-10-18)
 
 ### Changed
