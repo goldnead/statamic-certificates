@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.5 (2026-10-18)
+
+### Changed
+
+- Compatible with statamic-courses 0.5 (`^0.5` added to the constraint). Courses 0.5 only adds lesson boxes; nothing this
+  addon reads has changed.
+
 ## 0.1.4 (2026-10-17)
 
 ### Changed
