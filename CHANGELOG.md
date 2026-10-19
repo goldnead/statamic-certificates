@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.7 (2026-10-19)
+
+### Changed
+
+- Compatible with statamic-courses 0.7 (`^0.7` added to the constraint). Courses 0.7 only adds funnels-map edges; nothing
+  this addon reads has changed.
+
 ## 0.1.6 (2026-10-18)
 
 ### Changed
