@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.8 (2026-10-21)
+
+### Changed
+
+- Compatible with statamic-courses 0.8 (`^0.8` added to the constraint). Nothing this addon reads has changed.
+
 ## 0.1.7 (2026-10-19)
 
 ### Changed
