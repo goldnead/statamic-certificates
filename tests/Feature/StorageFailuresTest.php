@@ -64,6 +64,16 @@ it('renders again instead of serving an empty PDF when the stored file cannot be
     expect(substr(Certificates::pdf($certificate), 0, 5))->toBe('%PDF-');
 });
 
+it('keeps the cleanup error when a revoke listener throws as well', function () {
+    $certificate = Certificates::issue($this->makeUser('ada@example.com', 'Ada'), $this->makeCourse('Kurs'));
+    Certificates::pdf($certificate);
+    brokenDisk(['delete' => false]);
+    Event::listen(CertificateRevoked::class, fn () => throw new LogicException('listener'));
+
+    expect(fn () => Certificates::revoke($certificate, 'Aberkannt'))
+        ->toThrow(RuntimeException::class, 'could not delete');
+});
+
 it('logs when a rendered PDF could not be stored', function () {
     $certificate = Certificates::issue($this->makeUser('ada@example.com', 'Ada'), $this->makeCourse('Kurs'));
     brokenDisk(['put' => false]);

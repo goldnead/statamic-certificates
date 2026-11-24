@@ -165,13 +165,29 @@ class Certificates
             'revoked_reason' => trim($reason),
         ])->save();
 
+        $cleanupFailure = null;
+
         try {
             // The stored PDF of a revoked certificate is not served any more.
             $this->pdf->forget($certificate);
-        } finally {
-            // The revocation stands and is announced even if the cleanup fails;
-            // the failure still reaches the caller.
+        } catch (\RuntimeException $e) {
+            $cleanupFailure = $e;
+        }
+
+        // The revocation stands and is announced even if the cleanup failed;
+        // the failure still reaches the caller, ahead of a throwing listener.
+        try {
             CertificateRevoked::dispatch($certificate);
+        } catch (\Throwable $listenerFailure) {
+            if ($cleanupFailure === null) {
+                throw $listenerFailure;
+            }
+
+            report($listenerFailure);
+        }
+
+        if ($cleanupFailure !== null) {
+            throw $cleanupFailure;
         }
 
         return $certificate;

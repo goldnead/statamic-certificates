@@ -75,7 +75,16 @@ class CertificatesController extends CpController
         // Through the brand scope: a certificate of another brand is not found.
         $model = Certificate::query()->findOrFail($certificate);
 
-        $certificates->revoke($model, $validated['reason']);
+        try {
+            $certificates->revoke($model, $validated['reason']);
+        } catch (\RuntimeException $e) {
+            // The revocation is saved; only deleting the stored PDF failed.
+            report($e);
+
+            return redirect()
+                ->to(cp_route('certificates.index'))
+                ->with('error', __('certificates::cp.revoked_cleanup_failed', ['code' => CertificateCode::format($model->code)]));
+        }
 
         return redirect()
             ->to(cp_route('certificates.index'))

@@ -4,7 +4,7 @@
 
 ### Fixed
 
-- Revoking a certificate no longer ignores a failed delete of the stored PDF: `revoke()` still saves and announces the revocation, then throws, and revoking again retries the cleanup.
+- Revoking a certificate no longer ignores a failed delete of the stored PDF: `revoke()` still saves and announces the revocation, then throws, and revoking again retries the cleanup. `Certificates::revoke()` can now throw a `RuntimeException` for that case; the Control Panel shows an error message instead of the success one.
 - A stored PDF that cannot be read or is empty is rendered again instead of being served as an empty download.
 - A rendered PDF that cannot be stored is logged as an error instead of failing silently.
 

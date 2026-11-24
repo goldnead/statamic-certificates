@@ -25,6 +25,7 @@ return [
     'revoke_confirm' => 'Widerrufen',
     'cancel' => 'Abbrechen',
     'revoked' => 'Zertifikat :code wurde widerrufen.',
+    'revoked_cleanup_failed' => 'Zertifikat :code wurde widerrufen, aber das gespeicherte PDF konnte nicht gelöscht werden. Erneut widerrufen wiederholt das Löschen; oder den Speicher prüfen.',
 
     'truncated' => 'Gezeigt werden die neuesten :limit von :total Zertifikaten.',
     'empty_heading' => 'Noch keine Zertifikate ausgestellt.',
