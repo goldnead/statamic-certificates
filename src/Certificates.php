@@ -154,6 +154,9 @@ class Certificates
     public function revoke(Certificate $certificate, string $reason): Certificate
     {
         if ($certificate->isRevoked()) {
+            // A second call is also the retry for a cleanup that failed before.
+            $this->pdf->forget($certificate);
+
             return $certificate;
         }
 
@@ -162,10 +165,14 @@ class Certificates
             'revoked_reason' => trim($reason),
         ])->save();
 
-        // The stored PDF of a revoked certificate is not served any more.
-        $this->pdf->forget($certificate);
-
-        CertificateRevoked::dispatch($certificate);
+        try {
+            // The stored PDF of a revoked certificate is not served any more.
+            $this->pdf->forget($certificate);
+        } finally {
+            // The revocation stands and is announced even if the cleanup fails;
+            // the failure still reaches the caller.
+            CertificateRevoked::dispatch($certificate);
+        }
 
         return $certificate;
     }

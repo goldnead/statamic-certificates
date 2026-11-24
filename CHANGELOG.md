@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Revoking a certificate no longer ignores a failed delete of the stored PDF: `revoke()` still saves and announces the revocation, then throws, and revoking again retries the cleanup.
+- A stored PDF that cannot be read or is empty is rendered again instead of being served as an empty download.
+- A rendered PDF that cannot be stored is logged as an error instead of failing silently.
+
 ## 0.1.9 (2026-11-16)
 
 ### Changed

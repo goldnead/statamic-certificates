@@ -43,18 +43,37 @@ class CertificatePdf
         $path = $this->path($certificate);
 
         if ($disk->exists($path)) {
-            return (string) $disk->get($path);
+            $stored = $disk->get($path);
+
+            // An unreadable or empty file is a miss, never a 200 with no body.
+            if (is_string($stored) && $stored !== '') {
+                return $stored;
+            }
         }
 
         $pdf = $this->render($certificate);
-        $disk->put($path, $pdf);
+
+        if (! $disk->put($path, $pdf)) {
+            Log::error('statamic-certificates: could not store the rendered PDF; it is rendered again on every request.', [
+                'certificate' => $certificate->getKey(),
+                'path' => $path,
+            ]);
+        }
 
         return $pdf;
     }
 
+    /**
+     * @throws \RuntimeException when the stored PDF is still there afterwards
+     */
     public function forget(Certificate $certificate): void
     {
-        $this->disk()->delete($this->path($certificate));
+        $disk = $this->disk();
+        $path = $this->path($certificate);
+
+        if (! $disk->delete($path) && $disk->exists($path)) {
+            throw new \RuntimeException("statamic-certificates: could not delete the stored PDF at [{$path}].");
+        }
     }
 
     /**
