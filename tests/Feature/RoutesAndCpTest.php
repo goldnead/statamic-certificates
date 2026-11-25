@@ -4,6 +4,7 @@ use Goldnead\BrandContext\Models\Brand;
 use Goldnead\Certificates\Facades\Certificates;
 use Illuminate\Routing\RouteCollection;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia;
 use Statamic\Facades\Role;
 use Statamic\Facades\User;
@@ -99,6 +100,21 @@ it('refuses the page and the revoke route without the permission', function () {
         ->and($revoke->status())->toBeIn([302, 403]);
 
     expect($certificate->fresh()->isRevoked())->toBeFalse();
+});
+
+it('tells the admin that the revoke stands but the PDF cleanup failed', function () {
+    $certificate = Certificates::issue($this->makeUser('ada@example.com', 'Ada'), $this->makeCourse('Kurs'));
+    Certificates::pdf($certificate);
+    $spy = Mockery::mock(Storage::disk('certificates-test'))->makePartial();
+    $spy->shouldReceive('delete')->andReturn(false);
+    Storage::set('certificates-test', $spy);
+
+    $this->actingAs(cpUser(['manage certificates']))
+        ->post('/cp/certificates/'.$certificate->id.'/revoke', ['reason' => 'Doppelt'])
+        ->assertRedirect('/cp/certificates')
+        ->assertSessionHas('error');
+
+    expect($certificate->fresh()->isRevoked())->toBeTrue();
 });
 
 it('revokes from the Control Panel, and only with a reason', function () {

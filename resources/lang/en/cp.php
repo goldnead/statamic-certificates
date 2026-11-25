@@ -25,6 +25,7 @@ return [
     'revoke_confirm' => 'Revoke',
     'cancel' => 'Cancel',
     'revoked' => 'Certificate :code was revoked.',
+    'revoked_cleanup_failed' => 'Certificate :code was revoked, but its stored PDF could not be deleted. Revoke it again to retry, or check the storage disk.',
 
     'truncated' => 'Showing the newest :limit of :total certificates.',
     'empty_heading' => 'No certificates issued yet.',
