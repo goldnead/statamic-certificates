@@ -28,7 +28,7 @@ it('logs the subject and the course when no default brand is found and the certi
 
     $brand = Mockery::mock();
     $brand->shouldReceive('current')->andThrow(new RuntimeException('no default brand'));
-    $brand->shouldReceive('currentId')->andReturn('00000000-0000-0000-0000-000000000001');
+    $brand->shouldReceive('currentId')->andReturn(1);
     $this->app->instance('brand-context', $brand);
     Log::spy();
 
