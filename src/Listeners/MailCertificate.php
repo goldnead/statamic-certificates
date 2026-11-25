@@ -34,8 +34,9 @@ class MailCertificate
 
         $subject = Subject::find($certificate->subject_type, $certificate->subject_id);
 
-        if ($subject?->email === null) {
+        if (blank($subject?->email)) {
             Log::warning('statamic-certificates: certificate issued, but its owner has no email address to send it to.', [
+                'certificate_id' => (string) $certificate->getKey(),
                 'certificate' => $certificate->code,
             ]);
 

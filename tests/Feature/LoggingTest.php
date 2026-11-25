@@ -4,6 +4,7 @@ use Goldnead\Certificates\Certificates as CertificatesService;
 use Goldnead\Certificates\Facades\Certificates;
 use Goldnead\Courses\Events\CourseCompleted;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 it('logs the learner and the course when the completion listener hits an unexpected error', function () {
     $user = $this->makeUser('ada@example.com', 'Ada');
@@ -38,5 +39,21 @@ it('logs the subject and the course when no default brand is found and the certi
     Log::shouldHaveReceived('warning')
         ->withArgs(fn ($message, $context) => ($context['subject_id'] ?? null) === (string) $user->id()
             && ($context['course'] ?? null) === $course)
+        ->once();
+});
+
+it('names the certificate id when its owner has no email address to send it to', function () {
+    config()->set('certificates.mail.enabled', true);
+    $user = $this->makeUser('', 'Ada');
+    $course = $this->makeCourse('Kurs');
+    Mail::fake();
+    Log::spy();
+
+    $certificate = Certificates::issue($user, $course);
+
+    Mail::assertNothingQueued();
+    Log::shouldHaveReceived('warning')
+        ->withArgs(fn ($message, $context) => str_contains($message, 'no email address')
+            && ($context['certificate_id'] ?? null) === (string) $certificate->getKey())
         ->once();
 });
