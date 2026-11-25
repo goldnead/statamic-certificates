@@ -14,6 +14,7 @@ use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Statamic\Facades\Entry;
 
@@ -99,7 +100,7 @@ class Certificates
                 'issuer_name' => $this->setting('issuer_name'),
                 'signatory_name' => $this->setting('signatory_name'),
                 'signatory_title' => $this->setting('signatory_title'),
-                'brand_handle' => $this->currentBrandHandle(),
+                'brand_handle' => $this->currentBrandHandle($subject, $courseId),
                 'issued_at' => $issuedAt ? Carbon::instance($issuedAt) : now(),
             ]));
         } catch (UniqueConstraintViolationException) {
@@ -208,7 +209,7 @@ class Certificates
         return is_string($value) && trim($value) !== '' ? mb_substr(trim($value), 0, 255) : null;
     }
 
-    protected function currentBrandHandle(): ?string
+    protected function currentBrandHandle(Subject $subject, string $courseId): ?string
     {
         if (! app()->bound('brand-context')) {
             return null;
@@ -216,8 +217,15 @@ class Certificates
 
         try {
             $handle = app('brand-context')->current()->handle ?? null;
-        } catch (\RuntimeException) {
+        } catch (\RuntimeException $e) {
             // No default brand yet (brand-context's migrations not run).
+            Log::warning('statamic-certificates: no current brand; the certificate is issued without a brand handle.', [
+                'subject_type' => $subject->type,
+                'subject_id' => $subject->id,
+                'course' => $courseId,
+                'exception' => $e,
+            ]);
+
             return null;
         }
 

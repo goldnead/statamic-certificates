@@ -37,6 +37,7 @@ class IssueCertificateOnCourseCompleted
             Log::warning($e->getMessage(), ['reason' => $e->reason(), 'user' => $event->userId, 'course' => $event->courseId]);
             CertificateNotIssued::dispatch($event->userId, $event->courseId, $e->reason(), $e->getMessage());
         } catch (Throwable $e) {
+            Log::error('statamic-certificates: the certificate could not be issued after course completion; certificates:issue --backfill issues it.', ['user' => $event->userId, 'course' => $event->courseId, 'exception' => $e]);
             report($e);
         }
     }
